@@ -30,7 +30,7 @@ public class Day01 {
                 .ifPresent(System.out::println);
 
         // 805731
-        //192684960
+        // 192684960
     }
 
     @SuppressWarnings("SameParameterValue")
