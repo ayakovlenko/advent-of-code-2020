@@ -5,11 +5,13 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static java.lang.Integer.parseInt;
+
 public class Day02 {
 
     public static void main(String[] args) {
-        System.out.println(countValidPasswords(RangeRule.class));
-        System.out.println(countValidPasswords(PositionRule.class));
+        System.out.println(countValidPasswords(RangeRule.class)); // 416
+        System.out.println(countValidPasswords(PositionRule.class)); // 688
     }
 
     public static long countValidPasswords(Class<? extends Rule> kind) {
@@ -35,18 +37,11 @@ public class Day02 {
 
         static Rule parse(String s, Class<? extends Rule> kind) {
             var token = s.split("[ -]");
+            var c = token[2].charAt(0);
             if (kind == RangeRule.class) {
-                return new RangeRule(
-                        token[2].charAt(0),
-                        Integer.parseInt(token[0]),
-                        Integer.parseInt(token[1])
-                );
+                return new RangeRule(c, parseInt(token[0]), parseInt(token[1]));
             } else {
-                return new PositionRule(
-                        token[2].charAt(0),
-                        Integer.parseInt(token[0]),
-                        Integer.parseInt(token[1])
-                );
+                return new PositionRule(c, parseInt(token[0]) - 1, parseInt(token[1]) - 1);
             }
         }
     }
@@ -58,8 +53,7 @@ public class Day02 {
             int n = 0;
             for (int i = 0; i < password.length(); i++) {
                 if (password.charAt(i) == this.symbol) {
-                    n++;
-                    if (n > this.max) {
+                    if (++n > this.max) {
                         return false;
                     }
                 }
@@ -72,11 +66,7 @@ public class Day02 {
 
         @Override
         public boolean validate(String password) {
-            try {
-                return password.charAt(pos1 - 1) == symbol ^ password.charAt(pos2 - 1) == symbol;
-            } catch (Exception e) {
-                throw new RuntimeException(String.format("rule: %s, password: %s", this, password), e);
-            }
+            return password.charAt(pos1) == symbol ^ password.charAt(pos2) == symbol;
         }
     }
 }

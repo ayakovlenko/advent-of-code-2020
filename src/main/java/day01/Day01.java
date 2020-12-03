@@ -15,25 +15,21 @@ public class Day01 {
     public static void main(String[] args) throws IOException {
         // Same input for both parts
         List<Integer> nums;
-        try (var input = Files.lines(Path.of("./data/day_01_part_1.txt"))) {
-            nums = input.map(Integer::parseInt).collect(Collectors.toList());
+        try (var lines = Files.lines(Path.of("./data/day_01_part_1.txt"))) {
+            nums = lines.map(Integer::parseInt).collect(Collectors.toList());
         }
 
         // Part 1
         twoSum(nums, 2020)
                 .flatMap(result -> result.stream().reduce((x, y) -> x * y))
-                .ifPresent(System.out::println);
+                .ifPresent(System.out::println); // 805731
 
         // Part 2
         threeSum(nums, 2020)
                 .flatMap(result -> result.stream().reduce((x, y) -> x * y))
-                .ifPresent(System.out::println);
-
-        // 805731
-        // 192684960
+                .ifPresent(System.out::println); // 192684960
     }
 
-    @SuppressWarnings("SameParameterValue")
     static Optional<List<Integer>> twoSum(List<Integer> nums, int target) {
         var cache = new HashMap<Integer, Integer>();
         for (int num : nums) {

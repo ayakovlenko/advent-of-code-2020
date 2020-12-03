@@ -14,20 +14,33 @@ public class Day03 {
         var toboggan = Toboggan.fromFile(Path.of("./data/day_03_part_1.txt"));
 
         // Part 1
-        System.out.println(toboggan.countTrees(new Slope(1, 3))); // 211
+        var part1 = toboggan.countTrees(new Slope(1, 3));
+        System.out.println(part1); // 211
 
         // Part 2
-        System.out.println(
-                toboggan.countTrees(new Slope(1, 1)) *
-                toboggan.countTrees(new Slope(1, 3)) *
-                toboggan.countTrees(new Slope(1, 5)) *
-                toboggan.countTrees(new Slope(1, 7)) *
+        var part2 = product(
+                toboggan.countTrees(new Slope(1, 1)),
+                toboggan.countTrees(new Slope(1, 3)),
+                toboggan.countTrees(new Slope(1, 5)),
+                toboggan.countTrees(new Slope(1, 7)),
                 toboggan.countTrees(new Slope(2, 1))
-        ); // 3584591857
+        );
+        System.out.println(part2); // 3584591857
+    }
+
+    static long product(int... args) {
+        long result = 1;
+        for (int arg : args) {
+            result *= arg;
+        }
+        return result;
     }
 
     enum SquareType {
         OPEN, TREE
+    }
+
+    record Slope(int x, int y) {
     }
 
     static class Toboggan {
@@ -54,10 +67,12 @@ public class Day03 {
             }
         }
 
-        long countTrees(Slope slope) {
+        int countTrees(Slope slope) {
             int trees = 0;
             for (var kind : new TobogganIterable(this, slope)) {
-                trees += kind == SquareType.TREE ? 1 : 0;
+                if (SquareType.TREE == kind) {
+                    trees++;
+                }
             }
             return trees;
         }
@@ -66,53 +81,47 @@ public class Day03 {
 
         private static List<SquareType> stringToSquareTypes(String s) {
             return s.chars()
-                    .mapToObj(Toboggan::charToSquareType)
+                    .mapToObj(c -> switch (c) {
+                        case '.' -> SquareType.OPEN;
+                        case '#' -> SquareType.TREE;
+                        default -> throw new RuntimeException("unknown square type: " + c);
+                    })
                     .collect(Collectors.toList());
         }
 
-        private static SquareType charToSquareType(int c) {
-            return switch (c) {
-                case '.' -> SquareType.OPEN;
-                case '#' -> SquareType.TREE;
-                default -> throw new RuntimeException("unknown square type: " + c);
-            };
-        }
-    }
+        private static class TobogganIterable implements Iterable<SquareType> {
 
-    record Slope(int x, int y) {}
+            final Toboggan toboggan;
 
-    static class TobogganIterable implements Iterable<SquareType> {
+            final Slope slope;
 
-        final Toboggan toboggan;
+            TobogganIterable(Toboggan toboggan, Slope slope) {
+                this.toboggan = toboggan;
+                this.slope = slope;
+            }
 
-        final Slope slope;
+            @Override
+            public Iterator<SquareType> iterator() {
+                return new Iterator<>() {
 
-        TobogganIterable(Toboggan toboggan, Slope slope) {
-            this.toboggan = toboggan;
-            this.slope = slope;
-        }
+                    int row = slope.x();
 
-        @Override
-        public Iterator<SquareType> iterator() {
-            return new Iterator<>() {
+                    int col = slope.y();
 
-                int row = slope.x();
+                    @Override
+                    public boolean hasNext() {
+                        return row < toboggan.height;
+                    }
 
-                int col = slope.y();
-
-                @Override
-                public boolean hasNext() {
-                    return row < toboggan.height;
-                }
-
-                @Override
-                public SquareType next() {
-                    var kind = toboggan.territory.get(row).get(col);
-                    row += slope.x();
-                    col = (col + slope.y()) % toboggan.width;
-                    return kind;
-                }
-            };
+                    @Override
+                    public SquareType next() {
+                        var kind = toboggan.territory.get(row).get(col);
+                        row += slope.x();
+                        col = (col + slope.y()) % toboggan.width;
+                        return kind;
+                    }
+                };
+            }
         }
     }
 }
