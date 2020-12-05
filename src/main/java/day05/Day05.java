@@ -4,12 +4,27 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class Day05 {
 
     public static void main(String[] args) {
+
+        {
+            var id = Seat.fromString("BFFFBBFRRR").id();
+            assert id == 567 : id;
+        }
+        {
+            var id = Seat.fromString("FFFBBBFRRR").id();
+            assert id == 119 : id;
+        }
+        {
+            var id = Seat.fromString("BBFFBBFRLL").id();
+            assert id == 820 : id;
+        }
+
         try (var lines = Files.lines(Path.of("./data/day_05_part_1.txt"))) {
             var seats = lines.map(Seat::fromString).collect(Collectors.toList());
 
@@ -17,17 +32,28 @@ public class Day05 {
 
             maxId.ifPresent(System.out::println); // 878
 
-            seats.sort(Comparator.comparing(Seat::id));
-            for (int i = 1; i < seats.size() - 1; i++) {
-                var leftSeat = seats.get(i - 1);
-                var rightSeat = seats.get(i);
-                if (leftSeat.id() + 1 == rightSeat.id() - 1) {
-                    System.out.println(leftSeat.id() + 1); // 504
-                }
-            }
+            System.out.println(findSeat(seats)); // 504
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    static int findSeat(List<Seat> seats) {
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+        var seen = new HashSet<Integer>();
+        for (var seat : seats) {
+            var id = seat.id();
+            if (id < min) min = id;
+            if (max < id) max = id;
+            seen.add(id);
+        }
+        seen.remove(min);
+        seen.remove(max);
+        for (int id = min + 1; id <= max - 1; id++) {
+            if (!seen.contains(id)) return id;
+        }
+        return -1;
     }
 
     static record Seat(int row, int col) {
@@ -45,8 +71,8 @@ public class Day05 {
             int hi = 128;
             for (int i = 0; i < 7; i++) {
                 switch (s.charAt(i)) {
-                    case 'F' -> lo -= (hi - lo) / 2;
-                    case 'B' -> hi += (hi - lo) / 2;
+                    case 'F' -> hi -= (hi - lo) / 2;
+                    case 'B' -> lo += (hi - lo) / 2;
                 }
             }
             return lo;
@@ -57,8 +83,8 @@ public class Day05 {
             int hi = 8;
             for (int i = 7; i < 10; i++) {
                 switch (s.charAt(i)) {
-                    case 'L' -> hi -= (hi - lo) / 2;
                     case 'R' -> lo += (hi - lo) / 2;
+                    case 'L' -> hi -= (hi - lo) / 2;
                 }
             }
             return lo;
