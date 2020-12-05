@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 public class Day05 {
@@ -30,15 +31,17 @@ public class Day05 {
 
             var maxId = seats.stream().mapToInt(Seat::id).max();
 
+            // Part 1
             maxId.ifPresent(System.out::println); // 878
 
-            System.out.println(findSeat(seats)); // 504
+            // Part 2
+            findSeat(seats).ifPresent(System.out::println); // 504
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    static int findSeat(List<Seat> seats) {
+    static OptionalInt findSeat(List<Seat> seats) {
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
         var seen = new HashSet<Integer>();
@@ -51,9 +54,9 @@ public class Day05 {
         seen.remove(min);
         seen.remove(max);
         for (int id = min + 1; id <= max - 1; id++) {
-            if (!seen.contains(id)) return id;
+            if (!seen.contains(id)) return OptionalInt.of(id);
         }
-        return -1;
+        return OptionalInt.empty();
     }
 
     static record Seat(int row, int col) {

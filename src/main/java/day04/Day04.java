@@ -5,8 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public class Day04 {
@@ -32,48 +34,62 @@ public class Day04 {
             }
         }
 
-        int valid = 0;
-        for (var passport : passports) {
-            if (passport.looksLegit()) {
-                valid++;
-            }
-        }
-        System.out.println(valid);
+        // Part 1
+        System.out.println(countValidPassports(passports, new Part1Strategy())); // 230
+
+        // Part 2
+        System.out.println(countValidPassports(passports, new Part2Strategy())); // 156
     }
 
+    static long countValidPassports(List<Passport> passports, Predicate<Passport> p) {
+        return passports.stream().filter(p).count();
+    }
 
-    record Passport(Map<String, String> fields) {
+    static record Passport(Map<String, String> fields) {
 
-        final static Pattern YEAR_PATTERN = Pattern.compile("\\d{4}");
+        final static Set<String> REQUIRED_FIELDS =
+                Set.of("byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid");
+    }
 
-        final static Pattern HEIGHT_PATTERN = Pattern.compile("(0|[1-9][0-9]*)(cm|in)");
+    static class Part1Strategy implements Predicate<Passport> {
 
-        final static Pattern HAIR_COLOR_PATTERN = Pattern.compile("#[0-9a-f]{6}");
+        @Override
+        public boolean test(Passport passport) {
+            return passport.fields.keySet().containsAll(Passport.REQUIRED_FIELDS);
+        }
+    }
 
-        final static Set<String> EYE_COLORS = Set.of("amb", "blu", "brn", "gry", "grn", "hzl", "oth");
+    static class Part2Strategy implements Predicate<Passport> {
 
-        final static Set<String> REQUIRED_FIELDS = Set.of("byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid");
+        private final static Pattern HEIGHT_PATTERN =
+                Pattern.compile("(0|[1-9][0-9]*)(cm|in)");
 
-        boolean looksLegit() {
-            return fields.keySet().containsAll(REQUIRED_FIELDS)
-                    && isYearInRange("byr", 1920, 2002)
-                    && isYearInRange("iyr", 2010, 2020)
-                    && isYearInRange("eyr", 2020, 2030)
-                    && isValidHeight()
-                    && isValidHairColor()
-                    && isValidEyeColor()
-                    && isValidPassportId();
+        private final static Pattern HAIR_COLOR_PATTERN =
+                Pattern.compile("#[0-9a-f]{6}");
+
+        private final static Set<String> EYE_COLORS =
+                Set.of("amb", "blu", "brn", "gry", "grn", "hzl", "oth");
+
+        @Override
+        public boolean test(Passport passport) {
+            return passport.fields.keySet().containsAll(Passport.REQUIRED_FIELDS)
+                    && isYearInRange(passport.fields.get("byr"), 1920, 2002)
+                    && isYearInRange(passport.fields.get("iyr"), 2010, 2020)
+                    && isYearInRange(passport.fields.get("eyr"), 2020, 2030)
+                    && isValidHeight(passport.fields.get("hgt"))
+                    && isValidHairColor(passport.fields.get("hcl"))
+                    && isValidEyeColor(passport.fields.get("ecl"))
+                    && isValidPassportId(passport.fields.get("pid"));
         }
 
-        private boolean isYearInRange(String fieldName, int min, int max) {
-            var yr = fields.get(fieldName);
-            if (!YEAR_PATTERN.matcher(yr).matches()) return false;
+        private boolean isYearInRange(String yr, int min, int max) {
+            if (yr.length() != 4 && !allDigits(yr)) return false;
             int i = Integer.parseInt(yr);
             return i >= min && i <= max;
         }
 
-        private boolean isValidHeight() {
-            var m = HEIGHT_PATTERN.matcher(fields.get("hgt"));
+        private boolean isValidHeight(String hgt) {
+            var m = HEIGHT_PATTERN.matcher(hgt);
             if (m.find()) {
                 var value = Integer.parseInt(m.group(1));
                 return switch (m.group(2)) {
@@ -85,16 +101,15 @@ public class Day04 {
             return false;
         }
 
-        private boolean isValidHairColor() {
-            return HAIR_COLOR_PATTERN.matcher(fields.get("hcl")).matches();
+        private boolean isValidHairColor(String hcl) {
+            return HAIR_COLOR_PATTERN.matcher(hcl).matches();
         }
 
-        private boolean isValidEyeColor() {
-            return EYE_COLORS.contains(fields.get("ecl"));
+        private boolean isValidEyeColor(String ecl) {
+            return EYE_COLORS.contains(ecl);
         }
 
-        private boolean isValidPassportId() {
-            var pid = fields.get("pid");
+        private boolean isValidPassportId(String pid) {
             return pid.length() == 9 && allDigits(pid);
         }
 
