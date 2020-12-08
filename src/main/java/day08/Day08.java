@@ -51,15 +51,13 @@ public class Day08 {
                 }
                 var inst = instructions.get(ip);
                 switch (inst.op) {
-                    case ACC:
+                    case ACC -> {
+                        ip++;
                         acc += inst.arg;
-                        break;
-                    case JMP:
-                        ip += inst.arg;
-                        continue;
-                    case NOP:
+                    }
+                    case JMP -> ip += inst.arg;
+                    case NOP -> ip++;
                 }
-                ip++;
             }
             return acc;
         }
