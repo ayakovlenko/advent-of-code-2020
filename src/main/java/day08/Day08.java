@@ -113,19 +113,12 @@ public class Day08 {
                                       int[] execCount,
                                       InstructionPatch candidate,
                                       LinkedList<InstructionPatch> patch) {
-            if (!patch.isEmpty()) {
-                return;
-            }
-
+            if (!patch.isEmpty()) return;
             if (ip == instructions.size() && candidate != null) {
                 patch.add(candidate);
                 return;
             }
-
-            if (ip >= instructions.size()) {
-                return;
-            }
-
+            if (ip >= instructions.size()) return;
             if (++execCount[ip] > 1) {
                 execCount[ip]--;
                 return;
