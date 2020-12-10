@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -25,7 +26,27 @@ public class Day10 {
 
         var diffCount = diffs.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         var part1 = diffCount.get(1) * diffCount.get(3);
-        System.out.println(part1);
+        System.out.println(part1); // 2414
+
+        var part2 = countCombs(input);
+        System.out.println(part2); // 21156911906816
+    }
+
+    static long countCombs(List<Integer> jolts) {
+        var dp = new HashMap<>(Map.of(jolts.get(jolts.size() - 1), 1L));
+        countCombsDp(jolts, jolts.size() - 2, dp);
+        return dp.get(0);
+    }
+
+    private static void countCombsDp(List<Integer> jolts, int i, Map<Integer, Long> dp) {
+        if (i < 0) return;
+        var canReach = 0L;
+        var maxJolts = jolts.get(i) + 3;
+        for (int j = i + 1; j < jolts.size() && jolts.get(j) <= maxJolts; j++) {
+            canReach += dp.get(jolts.get(j));
+        }
+        dp.put(jolts.get(i), canReach);
+        countCombsDp(jolts, i - 1, dp);
     }
 
     static List<Integer> parseInputFile(Path p) throws IOException {
