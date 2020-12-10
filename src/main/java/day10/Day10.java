@@ -34,19 +34,15 @@ public class Day10 {
 
     static long countCombs(List<Integer> jolts) {
         var dp = new HashMap<>(Map.of(jolts.get(jolts.size() - 1), 1L));
-        countCombsDp(jolts, jolts.size() - 2, dp);
-        return dp.get(0);
-    }
-
-    private static void countCombsDp(List<Integer> jolts, int i, Map<Integer, Long> dp) {
-        if (i < 0) return;
-        var canReach = 0L;
-        var maxJolts = jolts.get(i) + 3;
-        for (int j = i + 1; j < jolts.size() && jolts.get(j) <= maxJolts; j++) {
-            canReach += dp.get(jolts.get(j));
+        for (int i = jolts.size() - 2; i >= 0; i--) {
+            var canReach = 0L;
+            var maxJolts = jolts.get(i) + 3;
+            for (int j = i + 1; j < jolts.size() && jolts.get(j) <= maxJolts; j++) {
+                canReach += dp.get(jolts.get(j));
+            }
+            dp.put(jolts.get(i), canReach);
         }
-        dp.put(jolts.get(i), canReach);
-        countCombsDp(jolts, i - 1, dp);
+        return dp.get(0);
     }
 
     static List<Integer> parseInputFile(Path p) throws IOException {
