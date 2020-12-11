@@ -4,24 +4,23 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 public class Day11 {
 
     public static void main(String[] args) throws IOException {
-        var state = State.fromFile(Path.of("./data/day_11.txt"));
+        var layout = Layout.fromFile(Path.of("./data/day_11.txt"));
 
+        var state = new State(layout, SeatChoiceStrategy.PART1);
         while (state.hasNext()) {
             state = state.next();
         }
-        System.out.println(state.layout.countOccupied());
+        System.out.println(state.layout.countOccupied()); // 2265
     }
 
     static class Layout {
@@ -36,6 +35,15 @@ public class Day11 {
             this.grid = grid;
             this.height = grid.size();
             this.width = grid.get(0).size();
+        }
+
+        static Layout fromFile(Path p) throws IOException {
+            try (var lines = Files.lines(p)) {
+                var layout = lines.map(line ->
+                        line.chars().mapToObj(CellType::fromChar).collect(Collectors.toList())
+                ).collect(Collectors.toList());
+                return new Layout(layout);
+            }
         }
 
         private static final int[] DIRECTION = {-1, 0, 1};
@@ -84,22 +92,16 @@ public class Day11 {
 
     static class State implements Iterator<State> {
 
-        private final Set<Integer> seen;
+        private int prev;
 
         private Layout layout;
 
-        State(Layout layout) {
-            this.layout = layout;
-            this.seen = new HashSet<>();
-        }
+        private final SeatChoiceStrategy strategy;
 
-        static State fromFile(Path p) throws IOException {
-            try (var lines = Files.lines(p)) {
-                var layout = lines.map(line ->
-                        line.chars().mapToObj(CellType::fromChar).collect(Collectors.toList())
-                ).collect(Collectors.toList());
-                return new State(new Layout(layout));
-            }
+        State(Layout layout, SeatChoiceStrategy strategy) {
+            this.layout = layout;
+            this.prev = -1;
+            this.strategy = strategy;
         }
 
         @Override
@@ -109,29 +111,14 @@ public class Day11 {
 
         @Override
         public boolean hasNext() {
-            return !seen.contains(layout.hashCode());
+            return prev != layout.hashCode();
         }
 
         @Override
         public State next() {
-            var nextGridState = new ArrayList<List<CellType>>(layout.height);
-            for (int i = 0; i < layout.height; i++) {
-                nextGridState.add(new ArrayList<>());
-                for (int j = 0; j < layout.width; j++) {
-                    var currentCell = layout.grid.get(i).get(j);
-                    var adjacent = layout.adjacent(i, j);
-                    var count = adjacent.stream().filter(CellType.OCCUPIED::equals).count();
-                    if (currentCell == CellType.EMPTY && count == 0) {
-                        nextGridState.get(i).add(CellType.OCCUPIED);
-                    } else if (currentCell == CellType.OCCUPIED && count >= 4) {
-                        nextGridState.get(i).add(CellType.EMPTY);
-                    } else {
-                        nextGridState.get(i).add(currentCell);
-                    }
-                }
-            }
-            seen.add(layout.hashCode());
-            layout = new Layout(nextGridState);
+            var nextLayout = strategy.nextLayout(layout);
+            prev = layout.hashCode();
+            layout = nextLayout;
             return this;
         }
     }
@@ -159,5 +146,30 @@ public class Day11 {
         public String toString() {
             return "" + c;
         }
+    }
+
+    interface SeatChoiceStrategy {
+
+        SeatChoiceStrategy PART1 = layout -> {
+            var grid = new ArrayList<List<CellType>>(layout.height);
+            for (int i = 0; i < layout.height; i++) {
+                grid.add(new ArrayList<>());
+                for (int j = 0; j < layout.width; j++) {
+                    var currentCell = layout.grid.get(i).get(j);
+                    var adjacent = layout.adjacent(i, j);
+                    var count = adjacent.stream().filter(CellType.OCCUPIED::equals).count();
+                    if (currentCell == CellType.EMPTY && count == 0) {
+                        grid.get(i).add(CellType.OCCUPIED);
+                    } else if (currentCell == CellType.OCCUPIED && count >= 4) {
+                        grid.get(i).add(CellType.EMPTY);
+                    } else {
+                        grid.get(i).add(currentCell);
+                    }
+                }
+            }
+            return new Layout(grid);
+        };
+
+        Layout nextLayout(Layout layout);
     }
 }
