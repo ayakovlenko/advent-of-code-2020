@@ -17,10 +17,12 @@ public class Day11 {
         var layout = Layout.fromFile(Path.of("./data/day_11.txt"));
 
         var state = new State(layout, SeatChoiceStrategy.PART1);
-        while (state.hasNext()) {
-            state = state.next();
-        }
+        while (state.hasNext()) state = state.next();
         System.out.println(state.layout.countOccupied()); // 2265
+
+        state = new State(layout, SeatChoiceStrategy.PART2);
+        while (state.hasNext()) state = state.next();
+        System.out.println(state.layout.countOccupied()); // 2045
     }
 
     static class Layout {
@@ -48,19 +50,30 @@ public class Day11 {
 
         private static final int[] DIRECTION = {-1, 0, 1};
 
-        List<CellType> adjacent(int i, int j) {
+        List<CellType> adjacent(int i, int j, int depth) {
             var cells = new LinkedList<CellType>();
             for (int iDelta : DIRECTION) {
                 for (int jDelta : DIRECTION) {
                     if (iDelta == 0 && jDelta == 0) continue;
-                    int i1 = i + iDelta;
-                    int j1 = j + jDelta;
-                    if (0 <= i1 && i1 < height && 0 <= j1 && j1 < width) {
-                        cells.add(grid.get(i1).get(j1));
-                    }
+                    cells.addAll(adjacent(i, j, iDelta, jDelta, depth));
                 }
             }
             return cells;
+        }
+
+        private List<CellType> adjacent(int i, int j, int iDelta, int jDelta, int depth) {
+            if (depth == 0) return List.of();
+            int i1 = i + iDelta;
+            int j1 = j + jDelta;
+            if (0 <= i1 && i1 < height && 0 <= j1 && j1 < width) {
+                var cell = grid.get(i1).get(j1);
+                if (cell != CellType.FLOOR) {
+                    return List.of(cell);
+                }
+            } else if (i1 < 0 || height <= i1 || j1 < 0 || width <= j1) {
+                return List.of();
+            }
+            return adjacent(i1, j1, iDelta, jDelta, depth - 1);
         }
 
         long countOccupied() {
@@ -156,11 +169,31 @@ public class Day11 {
                 grid.add(new ArrayList<>());
                 for (int j = 0; j < layout.width; j++) {
                     var currentCell = layout.grid.get(i).get(j);
-                    var adjacent = layout.adjacent(i, j);
+                    var adjacent = layout.adjacent(i, j, 1);
                     var count = adjacent.stream().filter(CellType.OCCUPIED::equals).count();
                     if (currentCell == CellType.EMPTY && count == 0) {
                         grid.get(i).add(CellType.OCCUPIED);
                     } else if (currentCell == CellType.OCCUPIED && count >= 4) {
+                        grid.get(i).add(CellType.EMPTY);
+                    } else {
+                        grid.get(i).add(currentCell);
+                    }
+                }
+            }
+            return new Layout(grid);
+        };
+
+        SeatChoiceStrategy PART2 = layout -> {
+            var grid = new ArrayList<List<CellType>>(layout.height);
+            for (int i = 0; i < layout.height; i++) {
+                grid.add(new ArrayList<>());
+                for (int j = 0; j < layout.width; j++) {
+                    var currentCell = layout.grid.get(i).get(j);
+                    var adjacent = layout.adjacent(i, j, -1);
+                    var count = adjacent.stream().filter(CellType.OCCUPIED::equals).count();
+                    if (currentCell == CellType.EMPTY && count == 0) {
+                        grid.get(i).add(CellType.OCCUPIED);
+                    } else if (currentCell == CellType.OCCUPIED && count >= 5) {
                         grid.get(i).add(CellType.EMPTY);
                     } else {
                         grid.get(i).add(currentCell);
