@@ -18,33 +18,29 @@ public class Day12 {
                         .position.distance(new Point(0, 0));
         System.out.println(part1); // 1441
 
-        System.out.println(part2(instructions)); // < 75306
+        // Part 2
+        System.out.println(part2(instructions)); // 61616
     }
 
     static int part2(List<Instruction> instructions) {
         var s = new Point(0, 0);
         var t = new Translation(10, 1);
-        var w = new Point(s.x + t.x, s.y + t.y);
         for (var i : instructions) {
             if (i.direction() instanceof CardinalDirection direction) {
                 switch (direction) {
                     case NORTH -> t = new Translation(t.x, t.y + i.value);
-                    case EAST -> t = new Translation(t.x + i.value, t.y);
                     case SOUTH -> t = new Translation(t.x, t.y - i.value);
+                    case EAST -> t = new Translation(t.x + i.value, t.y);
                     case WEST -> t = new Translation(t.x - i.value, t.y);
                 }
             } else if (i.direction() instanceof RelativeDirection direction) {
                 switch (direction) {
                     case FORWARD -> s = new Point(s.x + t.x * i.value, s.y + t.y * i.value);
-                    case LEFT -> t = t.rotated(i.value % 360);
-                    case RIGHT -> t = t.rotated(-(i.value % 360));
+                    case LEFT -> t = t.rotated(i.value);
+                    case RIGHT -> t = t.rotated(-i.value);
                 }
             }
-            w = new Point(s.x + t.x, s.y + t.y);
         }
-
-        System.out.println(s);
-        System.out.println(w);
         return s.distance(new Point(0, 0));
     }
 
@@ -52,13 +48,13 @@ public class Day12 {
 
         @SuppressWarnings("SuspiciousNameCombination")
         Translation rotated(int angdeg) {
-            return switch (angdeg) {
-                case 0 -> this;
-                case 90, -270 -> new Translation(-y, x);
-                case 180, -180 -> new Translation(-x, y);
-                case 270, -90 -> new Translation(y, -x);
-                default -> throw new IllegalArgumentException("" + angdeg);
-            };
+            var result = this;
+            angdeg = angdeg % 360;
+            angdeg = angdeg < 0 ? 360 + angdeg : angdeg;
+            for (; angdeg > 0; angdeg -= 90) {
+                result = new Translation(-result.y, result.x);
+            }
+            return result;
         }
     }
 
