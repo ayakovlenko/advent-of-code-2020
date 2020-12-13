@@ -12,14 +12,26 @@ public class Day12 {
         var instructions = Instructions.fromFile(Path.of("./data/day_12.txt"));
 
         // Part 1
-        var part1 =
-                new Ship(new Point(0, 0), CardinalDirection.EAST)
-                        .move(instructions)
-                        .position.distance(new Point(0, 0));
-        System.out.println(part1); // 1441
+        if (part1(instructions) != 1441) throw new AssertionError();
 
         // Part 2
-        System.out.println(part2(instructions)); // 61616
+        if (part2(instructions) != 61616) throw new AssertionError();
+    }
+
+    static int part1(List<Instruction> instructions) {
+        var p = new Point(0, 0);
+        var fd = CardinalDirection.EAST;
+        for (var i : instructions) {
+            if (i.direction() instanceof CardinalDirection direction) {
+                p = p.moved(direction, i.value());
+            } else if (i.direction() instanceof RelativeDirection direction) {
+                fd = fd.turned(direction, i.value());
+                if (direction == RelativeDirection.FORWARD) {
+                    p = p.moved(fd, i.value());
+                }
+            }
+        }
+        return p.distance(new Point(0, 0));
     }
 
     static int part2(List<Instruction> instructions) {
@@ -55,25 +67,6 @@ public class Day12 {
                 result = new Translation(-result.y, result.x);
             }
             return result;
-        }
-    }
-
-    static record Ship(Point position, CardinalDirection facingDirection) {
-
-        Ship move(List<Instruction> instructions) {
-            var newPosition = position;
-            var fd = facingDirection;
-            for (var instruction : instructions) {
-                if (instruction.direction() instanceof CardinalDirection direction) {
-                    newPosition = newPosition.moved(direction, instruction.value());
-                } else if (instruction.direction() instanceof RelativeDirection direction) {
-                    fd = fd.turned(direction, instruction.value());
-                    if (direction == RelativeDirection.FORWARD) {
-                        newPosition = newPosition.moved(fd, instruction.value());
-                    }
-                }
-            }
-            return new Ship(newPosition, fd);
         }
     }
 
