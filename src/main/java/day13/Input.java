@@ -13,7 +13,7 @@ record Input(int earlierDeparture, List<Integer> busIds) {
             int earlierDeparture = Integer.parseInt(br.readLine());
             var busIds = new ArrayList<Integer>();
             for (var busId : br.readLine().split(",")) {
-                if (!busId.equals("x")) busIds.add(Integer.parseInt(busId));
+                busIds.add(busId.equals("x") ? null : Integer.parseInt(busId));
             }
             return new Input(earlierDeparture, busIds);
         }
